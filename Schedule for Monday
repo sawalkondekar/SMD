@@ -1,0 +1,40 @@
+// fet = Form[ID != 0];
+// for each  rec in fet
+// {
+// 	if(zoho.currentdate > rec.WEEK || isnull(rec.WEEK) == true)
+// 	{
+// 		rec.WEEK=zoho.currentdate.toStartOfWeek().addDay(1);
+// 		info "In the If Confition";
+// 		 count = rec.WEEK;
+// 		 info count.size();
+// 	}
+// }
+// info "Out of  If";
+// will change if current date passes
+// fet = Form[ID != 0];
+// for each  rec in fet
+// {
+// 	if(zoho.currentdate > rec.WEEK)
+// 	{
+// 		rec.WEEK=zoho.currentdate.toStartOfWeek().addDay(1).addDay(7);
+// 		info "In the If Confition";
+// 	}
+// }
+// info "Out of  If";
+//will update saturday passed
+fet = Form[ID != 0];
+if(fet.WEEK != null )
+{
+	for each  rec in fet
+	{
+		// 		info rec.WEEK + " :: " +rec.ID;
+		sat = rec.WEEK.addDay(5);
+		if(zoho.currentdate > sat)
+		{
+			rec.WEEK=zoho.currentdate.toStartOfWeek().addDay(1).addDay(7);
+			info "In the If Confition";
+		}
+	}
+	info "Out of  If  1";
+}
+info "Out of  If   2";
