@@ -1,0 +1,19 @@
+lstV="abc def ghe".toList(" "); info lstV.size();
+	if ( lstV.size() == 3 ) 
+	{
+		a=lstV.get(0); info a; 
+	b=lstV.get(1); info b;
+	c=lstV.get(2); info c;
+	}
+ 	
+		if ( lstV.size() == 2 ) 
+	{
+		a=lstV.get(0); info a;
+	b=lstV.get(1); info b;
+
+	}
+	
+	if ( lstV.size() == 1 ) 
+	{
+		a=lstV.get(0); info a;
+	}
