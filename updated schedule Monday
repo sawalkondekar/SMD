@@ -14,3 +14,4 @@ for each fet in Form[ID != 0]
 		}
 
 }
+///Makes sense, the subform/list as a whole is not null but individual entries are
