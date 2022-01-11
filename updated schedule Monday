@@ -1,0 +1,16 @@
+for each fet in Form[ID != 0]
+{
+		if(fet.WEEK != null)
+		{
+		sat = fet.WEEK.addDay(5);
+			if(zoho.currentdate > sat)
+			{
+			fet.WEEK=zoho.currentdate.toStartOfWeek().addDay(1).addDay(7);
+			info "In the If Confition";
+			// info rec.WEEK + " :: " +rec.ID;
+
+			}
+
+		}
+
+}
