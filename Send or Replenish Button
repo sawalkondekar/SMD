@@ -1,0 +1,17 @@
+insert1 = insert into Form
+[
+	When_it=zoho.currentdate
+	Added_User=zoho.loginuser
+	Copy_of=input.Seller
+	Status="Pending"
+	Company=input.Seller.company
+	Email=input.Seller.email
+	Name_of_the_Product=input.Product1
+	SKU=input.FNSKU_SKU_ASIN
+	Size_H_In_Inches=input.size_h
+	Size_W_In_Inches=input.size_w
+	Size_L_In_Inches=input.size_l
+	SKU=input.SKU
+	FNSKU=input.FNSKU
+	ASIN=input.ASIN
+];
