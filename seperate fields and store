@@ -17,3 +17,7 @@ lstV="abc def ghe".toList(" "); info lstV.size();
 	{
 		a=lstV.get(0); info a;
 	}
+	
+	A = a; info "A = " + A; 
+	B = b; info "B = " + B;
+	C =c; info "C = " + C; 
