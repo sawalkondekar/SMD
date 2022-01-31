@@ -1,0 +1,8 @@
+if(thisapp.portal.loginUserProfile() == "Customer")
+{
+	//checking profile name of the portal user
+	//disable Copy_of;
+	disable Company;
+	disable Email;
+	hide WEEK;
+}
