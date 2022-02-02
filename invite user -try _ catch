@@ -1,0 +1,20 @@
+try 
+{
+	thisapp.portal.assignUserInProfile(input.email,"Customer",true);
+	info "Email Sent  new user";
+}
+catch (e)
+{
+	info e.toString();
+	sendmail
+	[
+		from :zoho.adminuserid
+		to :input.email
+		subject :"Reset Password"
+		message :"<p>Hi, Click on below link to reset password  -  <a href='https://shipmydeal.zohocreatorportal.com/reset'>Please click here</a></p>"
+	]
+	info "Email Sent reset password";
+}
+//info "Email Sent d ";
+//thisapp.permissions.assignUserInProfile
+//	thisapp.portal.assignUserInProfile(input.email,"Customer",true);
