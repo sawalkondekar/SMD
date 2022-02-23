@@ -1,0 +1,458 @@
+void shipmentText()
+{
+	//get last invoiced date if 
+	Today = zoho.currentdate;
+	//  info Today;
+	startofWeek = Today.toStartOfWeek();
+	//  info startofWeek;
+	startdate = startofWeek.subWeek(1);
+	getlastInvoiceDetails = Monthly_Schedule_Check_Form[ID != null];
+	if(getlastInvoiceDetails.count() > 0)
+	{
+		if(!getlastInvoiceDetails.Status)
+		{
+			startdate = getlastInvoiceDetails.Last_Invoiced_Date;
+			getlastInvoiceDetails.Status=true;
+		}
+	}
+	quantity = 0;
+	sum = 0;
+	getmap = Map();
+	map2 = Map();
+	list1 = List();
+	list1.add(map2);
+	baseEncoded = zoho.encryption.base64Encode("acef21649b7d48fea5d21d7cb59fc520:c0c2ae2e5a864293be6a3397b9650c08");
+	map2.put("Authorization","Basic " + baseEncoded.tostring());
+	getmap.put("Headers",list1);
+	//  info startdate;
+	getstart = startdate.tostring("yyyy-MM-dd");
+	getstart = getstart + " 00:00:00";
+	// info getstart;
+	enddate = startdate.addDay(6);
+	getend = enddate.tostring("yyyy-MM-dd");
+	getend = getend + " 23:59:59";
+	// info getend;
+	pagecount = 1;
+	pagesize = 50;
+	Error = "";
+	// for one week
+	shipmentdata = "https://ssapi.shipstation.com/shipments?shipDateStart=" + getstart + "&shipDateEnd=" + getend + "&page=" + pagecount + "&pageSize=" + pagesize;
+	// for single order
+	// 		shipmentdata = "https://ssapi.shipstation.com/shipments?orderNumber=1589314272";
+	//shipmentdata = "https://ssapi.shipstation.com/shipments?orderNumber=1000017432";
+	//shipmentdata = "https://ssapi.shipstation.com/shipments?orderNumber=1000020856";
+	shipmentData = getUrl(shipmentdata,map2);
+	Allshipment = shipmentData.get("shipments").toList();
+	if(Allshipment.size() > 0)
+	{
+		for each  ship in Allshipment
+		{
+			eData = "";
+			e1Data = "";
+			e2Data = "";
+			shipmentid = ship.get("shipmentId");
+			shipdate = ship.get("shipDate");
+			orderid = ship.get("orderId");
+			state_name = ship.get("shipTo").get("state");
+			country_name = ship.get("shipTo").get("country");
+			weight = ship.get("weight").get("value");
+			servicecode = ship.get("serviceCode");
+			carriercode = ship.get("carrierCode");
+			insurancecost = ship.get("insuranceCost");
+			shipmentcost = ship.get("shipmentCost");
+			customerName = ship.getJSON("shipTo").get("name");
+			returnLabel = ship.get("isReturnLabel");
+			if(orderid == null)
+			{
+				info "Orderid is null";
+			}
+			else if(orderid != null && returnLabel == false)
+			{
+				try 
+				{
+					orderData = getUrl("https://ssapi.shipstation.com/orders/" + orderid,map2);
+					if(orderData.isEmpty())
+					{
+						info "Order data is empty";
+					}
+					else if(!orderData.isEmpty())
+					{
+						orderstatus = orderData.get("orderStatus");
+						if(orderstatus != "cancelled")
+						{
+							orderdate = orderData.get("orderDate");
+							orderno = orderData.get("orderNumber");
+							info "Order No: " + orderno;
+							if(orderno.contains("-"))
+							{
+								ordercode = orderno.getprefix("-");
+								alpha = ordercode.getAlpha();
+							}
+							else
+							{
+								ordercode = "";
+								alpha = "";
+							}
+							if(alpha.containsIgnoreCase("SMD") == false && alpha.containsIgnoreCase("CALL") == false)
+							{
+								customerId = orderData.get("customerId");
+								SKU = "";
+								description = "";
+								tempQuantity = 0;
+								orderedItems = orderData.getJSON("items");
+								if(orderedItems != "" && orderedItems != null)
+								{
+									allItems = orderData.getJSON("items").toList();
+									if(allItems.size() > 0)
+									{
+										loopcount = 0;
+										for each  getitem in allItems
+										{
+											temp_name = getitem.get("name");
+											quantity = getitem.get("quantity");
+											price = getitem.get("unitPrice");
+											//line no.113,114,116
+											if(price >= 0 && temp_name.containsIgnoreCase("Discount") != true && temp_name.containsIgnoreCase("Coupon") != true)
+											{
+												tempQuantity = tempQuantity + quantity;
+											}
+											if(loopcount == 0)
+											{
+												if(price >= 0 && temp_name.containsIgnoreCase("Discount") != true && temp_name.containsIgnoreCase("Coupon") != true)
+												{
+													SKU = getitem.get("sku");
+													description = temp_name;
+													if(SKU == " " || SKU.isEmpty())
+													{
+														loopcount = loopcount + 1;
+													}
+												}
+											}
+										}
+										//sid_for quantity issue
+										///Also substract size2 from quantity_sold_out
+										// 										list2 = List();
+										// 										for each  u_price in allItems
+										// 										{
+										// 											pr = u_price.get("unitPrice");
+										// 											if(pr.contains("-"))
+										// 											{
+										// 												list2.add(u_price);
+										// 											}
+										// 										}
+										// 										size2 = list2.size();
+										// 										info "size2  " + size2;
+										//end for quantity issue	
+									}
+								}
+								storeidrecords = ship.getJSON("advancedOptions").get("storeId");
+								if(storeidrecords == null)
+								{
+									info "Store id is empty";
+								}
+								else if(storeidrecords != null)
+								{
+									try 
+									{
+										storeData = getUrl("https://ssapi.shipstation.com/stores/" + storeidrecords,map2);
+										storeidd = storeData.get("storeId");
+										if(storeidd == null)
+										{
+											sendmail
+											[
+												from :zoho.adminuserid
+												to :"info@shipmydeal.com","ariyaperumal@bizappln.com"
+												subject :"Store Name value is Empty in Ship Station."
+												message :"Hi, For the following shipment details, the Store Name value is empty in the Shipstation. The store Name is not mapped to the shipment details given below. <br>So, that's record is not inserted in the SALES report. So, please add the Store Name for the following shipment.<br>More Informations:<br>Shipment ID = " + shipmentid + "<br>Order ID = " + orderid + "<br>Order Number = " + orderno
+											]
+										}
+										else if(storeidd != null)
+										{
+											storename = storeData.get("storeName");
+											sn = storename.trim();
+											info "Store Name: " + sn;
+											if(sn.containsIgnoreCase("Ship My Deal Shopify Store") == false && sn.containsIgnoreCase("Call Israel Wix Store") == false)
+											{
+												shippingService = 2 + tempQuantity - 1;
+												if(carriercode == "stamps_com")
+												{
+													shippingcost = shipmentcost;
+												}
+												else if(carriercode == "fedex")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.3;
+												}
+												else if(carriercode == "ups")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.3;
+												}
+												else if(servicecode == "rrd_epacket_usps_service" && carriercode == "rr_donnelley")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.5;
+												}
+												else if(servicecode == "rrd_priority_parcel_non_dc" && carriercode == "rr_donnelley")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.3;
+												}
+												// code added by cva 29-Jul-2020
+												else if(servicecode == "rrd_priority_parcel_dc" && carriercode == "rr_donnelley")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.5;
+												}
+												else if(servicecode == "rrd_courier_service" && carriercode == "rr_donnelley")
+												{
+													shippingcost = shipmentcost + shipmentcost * 0.5;
+												}
+												// code end by CVA
+												else
+												{
+													shippingcost = 0.0;
+												}
+												if(shippingService == null)
+												{
+													finalshippingservice = 0.0;
+												}
+												else
+												{
+													finalshippingservice = shippingService;
+												}
+												if(insurancecost == null)
+												{
+													finalinsurance = 0.0;
+												}
+												else
+												{
+													finalinsurance = insurancecost;
+												}
+												if(shippingcost == null || shippingcost == 0.0)
+												{
+													finalpostage = 0.0;
+												}
+												else
+												{
+													finalpostage = shippingcost;
+												}
+												if(SKU == " " || SKU.isEmpty())
+												{
+													productname = description;
+												}
+												else
+												{
+													productname = SKU;
+												}
+												info "Product Name: " + productname;
+												//
+												finalpostageservice = 0.2;
+												finalenvelopebox = 0.0;
+												finalmarketingmaterial = 0.0;
+												finalbubblewrap = 0.0;
+												finalother = 0.0;
+												finaltotal = finalpostage * 1.08 + finalpostageservice + finalshippingservice + finalenvelopebox + finalmarketingmaterial + finalbubblewrap + finalinsurance + finalother;
+												//
+												if(!sn.equalsIgnoreCase("Manual Orders"))
+												{
+													storedetails = Store_details[Store_Name.equalsIgnoreCase(sn)];
+													if(storedetails.count() == 0)
+													{
+														sendmail
+														[
+															from :zoho.adminuserid
+															to :"info@shipmydeal.com","ariyaperumal@bizappln.com"
+															subject :"Store Name value is Empty in Seller's Info."
+															message :"Hi, For the following shipment, the Store Name value is empty in the Seller's' Info.<br>So, that, can't to fetch the Seller Name and the given shipment record is not inserted into the SALES report. In Shipstation, the Store Name value of the given shipment is " + sn + ". So, please add the Store Name for the following shipment's Seller Info.<br>More Informations:<br>Shipment ID = " + shipmentid + "<br>Order ID = " + orderid + "<br>Order Number = " + orderno
+														]
+													}
+													else if(storedetails.count() > 0)
+													{
+														info "Inserted.!";
+														//tempQuantity1 = tempQuantity + quantity;
+														sellerinfo = Copy_of[ID == storedetails.seller_s_info_ID];
+														qtySold = finalshippingservice - 1;
+														insert into SALES
+														[
+															Added_User=zoho.loginuser
+															Seller=sellerinfo.ID
+															Order_ID=orderid
+															Shipment_ID=shipmentid
+															order=orderno
+															date_field=shipdate
+															customer=customerName
+															Product1=productname
+															Name_Company=sellerinfo.company
+															quantity_sold_out=qtySold
+															Weight=weight
+															State=state_name
+															Country=country_name
+															postage=finalpostage
+															postage_service=0.2
+															shipping_service=finalshippingservice
+															insurance=finalinsurance
+															envelope_box=0.0
+															marketing_material=0.0
+															bubble_wrap=0.0
+															other=0.0
+															TOTAL=finaltotal
+														]
+													}
+												}
+												else if(sn.equalsIgnoreCase("Manual Orders"))
+												{
+													sellerinfos = Copy_of[Order_Code.equalsIgnoreCase(alpha)];
+													if(sellerinfos.count() == 0)
+													{
+														sendmail
+														[
+															from :zoho.adminuserid
+															to :"info@shipmydeal.com","ariyaperumal@bizappln.com"
+															subject :"Manual Order Code value is Empty in Seller's Info."
+															message :"Hi, For the following shipment, the Manual Order Code value is empty in the Seller's' Info.<br>So, that, can't to fetch the Seller Name and the given shipment record is not inserted into the SALES report. In Shipstation, the Manual Order Code value of the given shipment is " + alpha + ". So, please add the Manual Order Code for the following shipment's Seller Info.<br>More Informations:<br>Shipment ID = " + shipmentid + "<br>Order ID = " + orderid + "<br>Order Number = " + orderno
+														]
+													}
+													else if(sellerinfos.count() > 0)
+													{
+														info "Inserted Manual Orders.!";
+														//tempQuantity1 = tempQuantity + quantity;
+														qty = finalshippingservice - 1;
+														insert into SALES
+														[
+															Added_User=zoho.loginuser
+															Seller=sellerinfos.ID
+															Order_ID=orderid
+															Shipment_ID=shipmentid
+															order=orderno
+															date_field=shipdate
+															customer=customerName
+															Product1=productname
+															Name_Company=sellerinfos.company
+															quantity_sold_out=qty
+															Weight=weight
+															State=state_name
+															Country=country_name
+															postage=finalpostage
+															postage_service=0.2
+															shipping_service=finalshippingservice
+															insurance=finalinsurance
+															envelope_box=0.0
+															marketing_material=0.0
+															bubble_wrap=0.0
+															other=0.0
+															TOTAL=finaltotal
+														]
+													}
+												}
+											}
+										}
+									}
+									catch (e)
+									{
+										eData = e;
+									}
+								}
+							}
+						}
+					}
+				}
+				catch (e1)
+				{
+					e1Data = e1;
+				}
+				errordetails = ifnull(eData,"") + ifnull(e1Data,"");
+				if(errordetails != "" && errordetails != null)
+				{
+					errorData = "Shipment ID: " + shipmentid + " Order No: " + orderno + " Log Message: " + errordetails;
+					if(errorData != "" && errorData != null)
+					{
+						info "Error: " + errorData;
+						logmsg = insert into Logs
+						[
+							Added_User=zoho.loginuser
+							Start_Date=startdate
+							End_Date=enddate
+							Page_Number=pagecount
+							Error_Details=errorData
+						];
+					}
+				}
+			}
+			// To add Services
+			else if(orderid != null && returnLabel == true)
+			{
+				info "Return Label is added in Services.!";
+				try 
+				{
+					orderData = getUrl("https://ssapi.shipstation.com/orders/" + orderid,map2);
+					if(!orderData.isEmpty())
+					{
+						orderstatus = orderData.get("orderStatus");
+						info "Order Status = " + orderstatus;
+						if(orderstatus != "cancelled")
+						{
+							orderno = orderData.get("orderNumber");
+							info "Order No: " + orderno;
+							if(orderno.contains("-"))
+							{
+								ordercode = orderno.getprefix("-");
+								alpha = ordercode.getAlpha();
+							}
+							else
+							{
+								ordercode = "";
+								alpha = "";
+							}
+							if(alpha.containsIgnoreCase("SMD") == false && alpha.containsIgnoreCase("CALL") == false)
+							{
+								shippingcost = 0.00;
+								if(carriercode == "ups")
+								{
+									shippingcost = shipmentcost + shipmentcost * 0.3;
+								}
+								else
+								{
+									shippingcost = shipmentcost;
+								}
+								to_do_data = "Return Label";
+								units_data = 1.08;
+								extra_charge_data = 1.00;
+								box_charge = 0.00;
+								total_of_service = shippingcost * units_data + extra_charge_data + box_charge;
+								//
+								// info "Product = " + customerName;
+								// info "Cost = " + shippingcost;
+								//
+								insert_services = insert into SERVICES
+								[
+									Added_User=zoho.loginuser
+									Product1=description
+									cost=shippingcost
+									to_do=to_do_data
+									units=units_data
+									extra_charge=extra_charge_data
+									Box_charge=box_charge
+									TOTAL=total_of_service.round(2)
+								];
+							}
+						}
+					}
+				}
+				catch (e2)
+				{
+					e2Data = e2;
+				}
+			}
+			//
+		}
+		if(Allshipment.size() >= 50)
+		{
+			insert into Page_Count
+			[
+				Start_Date=startdate
+				End_Date=enddate
+				Page_Count=pagecount
+				Added_User=zoho.loginuser
+			]
+		}
+		//quantity_sold_out in sales in both insert task and replace  quantity_sold_out=tempQuantity with quantity_sold_out=tempQuantity1 - size2
+		//tempQuantity1 = tempQuantity + quantity; Also line 130 price -ve substract from all quantity
+		//Quantity Sold/Out = finalshippingservice - 1 [i.e ShippingService is $2 for 1st quantity followed by $1 for (2nd,3rd,etc.. quantity) other quantities.] 
+	}
+}
